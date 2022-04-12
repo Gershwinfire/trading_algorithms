@@ -29,10 +29,10 @@ from fbchat import Client as fbClient
 ###############################################
         #TWITTER API INFO
 #Tokens, but these need to be stored separately for security reasons
-api_key = 'FhdzFmM3fozi6J97SOETmT3Pv'
-api_secret = 'Lu366xhuFYzUNwflXHPfO5z8QfBp4tEFZqeZpGtnTiPTk0XzIv'
-aaccess_token = '1501961191027060791-03CP7zsrtjJGcxc0fYo4vrDAxkngfH'
-aaccess_secret = 'L13OOqBS0DzbDPFvkWFrMvhF2BvZX0umUFzMJLeYwr48i'
+api_key = 'API KEY'
+api_secret = 'API SECRET'
+aaccess_token = 'ACCESS TOKEN'
+aaccess_secret = 'ACCESS SECRET'
 #First authentication documentation----this is for V2
 auth = tweepy.OAuth1UserHandler(
    api_key, api_secret, 
@@ -70,7 +70,7 @@ kucoin_client = Client(kucoin_api_key, kucoin_api_secret, passphrase='2008013Ag!
 #########################################
 
 ####First find the users id for whom we will be tracking
-screen_name = "GoodBot21913682"
+screen_name = "elonmusk"
 elon = api.get_user(screen_name=screen_name)
 elon_id = elon.id
 
