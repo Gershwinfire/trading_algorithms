@@ -8,7 +8,7 @@ from twilio.rest import Client as twilioclient
 kucoin_api_key = kucoin_data.kucoin_api_key
 kucoin_api_secret = kucoin_data.kucoin_api_secret
 
-client = Client(kucoin_api_key, kucoin_api_secret,"2008013Ag!")
+client = Client(kucoin_api_key, kucoin_api_secret,"THIS IS THE PASSWORD")
 text_client = twilioclient(twiliodata.account_sid, twiliodata.auth_token)
 
 
