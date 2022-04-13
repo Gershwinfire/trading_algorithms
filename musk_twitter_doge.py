@@ -96,7 +96,7 @@ while keyword_not_found:
             new_word = ''.join(filter(str.isalnum, word)) 
             new_word = new_word.lower().strip()
             if new_word == keyword or new_word == keyword2:
-                text_client.messages.create(to="7177295751", from_=twiliodata.phone_number, body=body)
+                text_client.messages.create(to="Phone Number", from_=twiliodata.phone_number, body=body)
                 print(body)
                 kucoin_helpers.execute_doge_musktrade()
                 keyword_not_found = False
