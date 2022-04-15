@@ -2,13 +2,36 @@ import base64, hmac, hashlib, twiliodata, requests, kucoin_data, time, json, thr
 from sqlalchemy import create_engine
 from kucoin.client import Client
 from twilio.rest import Client as twilioclient
+import pandas as pd
+import pandas_ta as ta
 
+
+
+'''
+CRITIQUES TO ADD TO FILE:
+
+    -useless wrappers around Kucoin API
+    -improper storage of api keys
+    -remove useless reptitive functions
+    -reconsider using limit orders versus stop orders to avoid using sl/tp triggers
+        --This also allows you to avoids miscalculations in profit/loss math.
+            --When doing this, perhaps it would also be a good idea to monitor orders placed, so that when one order
+            is executed, we can cancel the opposing option in order to maintain a 0 outstanding balance before repeating
+    -Use futures contacts as there is more movement, and you can still use 1x leverage.
+        --Increase leverage as necessary.
+    -look into pandas-ta/talib libraries to calculate MA and EMA
+    -if new_word in [keyword, keyword2]:
+    -CONSIDER typehints and specifying return type
+    -GOOGLE 'unit testing' how to write tests in python
+    -Use ReadMe file
+    -Look into FuzzyWuzzy package module for sentiment trading
+'''
 
 
 kucoin_api_key = kucoin_data.kucoin_api_key
 kucoin_api_secret = kucoin_data.kucoin_api_secret
 
-client = Client(kucoin_api_key, kucoin_api_secret,"THIS IS THE PASSWORD")
+client = Client(kucoin_api_key, kucoin_api_secret,"2008013Ag!")
 text_client = twilioclient(twiliodata.account_sid, twiliodata.auth_token)
 
 
@@ -25,7 +48,9 @@ def get_price(tradingpair):
     return (data)
 
 
-def kline_data(tradingpair, timespan, start, end):
+def kline_data(tradingpair, timespan, **kwargs):
+    start = kwargs.get("start", None)
+    end = kwargs.get("end", None)
 
          ######"1545904980",             //Start time of the candle cycle
          ######"0.058",                  //opening price
@@ -39,167 +64,43 @@ def kline_data(tradingpair, timespan, start, end):
     return(data)
 
 
-def set_EMA5(database,tablename):
+def set_smas(tradingpair, timespan, **kwargs):
+    start = kwargs.get("start", None)
+    end = kwargs.get("end", None)
 
-    ema5list = []
+    doge_data = kline_data(tradingpair="DOGE-USDT", timespan="5min", start=1649609853)
 
-    db = create_engine("sqlite:///"+database)
+    df = pd.DataFrame(doge_data)
+    df = df.rename(columns={0: 'timestamp', 1: 'open', 2: 'close', 3: 'high', 4: 'low', 5: 'volume'})
 
-    data_set = db.execute(f"SELECT * FROM {tablename} WHERE id > 41;")
+    is_int = False
+    while not is_int:
+        how_many_times = input("How many times: ")
+        if how_many_times.strip().isdigit():
+            how_many_times = int(how_many_times)
+            is_int = True
+    smalist_to_obtain = []
 
-    counter = 46
-    for data in data_set:
-        counter += 1
-        datatime = data['timestamp']
-        id = data['id']
-        id = int(id)
+    for i in range(how_many_times):
+        sma_to_calculate = input("SMA to Calulate: ")
+        if sma_to_calculate.strip().isdigit:
+            sma_to_calculate = int(sma_to_calculate)
+            smalist_to_obtain.append(sma_to_calculate) 
 
-        price = data['lastprice']
-    
-        #####
-        #####DATA2 PRICE
-        data2_id = id - 1
-        data2_id = int(data2_id)
-        data2 = db.execute(f"SELECT lastprice FROM {tablename} WHERE id like {data2_id}")
-        data2money = data2.fetchall()
+    for number_to_calculate in smalist_to_obtain:
+        sma = ta.sma(df['high'], length=number_to_calculate)
 
-        data2price = 0
-        for item2 in data2money:
-            data2price = item2[0]
-        
+        total= 0.0
+        counter = 0
+        list_of_ema30 = []
+        for simple in sma:
+            ema30 = simple 
+            list_of_ema30.append(ema30)
 
-
-        #####
-        #####DATA3 PRICE
-        data3_id = id - 2
-        data3_id = int(data3_id)
-        data3 = db.execute(f"SELECT lastprice FROM {tablename} WHERE id like {data3_id}")
-        data3money = data3.fetchall()
-
-        data3price = 0
-        for item3 in data3money:
-            data3price = item3[0]
+        df[f'ema{number_to_calculate}'] = list_of_ema30
 
 
-
-        
-        #####
-        #####DATA4 PRICE
-        data4_id = id - 3
-        data4_id = int(data4_id)
-        data4 = db.execute(f"SELECT lastprice FROM {tablename} WHERE id like {data4_id}")
-        data4money = data4.fetchall()
-
-        data4price = 0
-        for item4 in data4money:
-            data4price = item4[0]
-
-
-
-
-         #####
-        #####DATA5 PRICE
-        data5_id = id - 4
-        data5_id = int(data5_id)
-        data5 = db.execute(f"SELECT lastprice FROM {tablename} WHERE id like {data5_id}")
-        data5money = data5.fetchall()
-
-        data5price = 0
-        for item5 in data5money:
-            data5price = item5[0]
-
-        
-        ema5tempdata = []    
-        ema5 = (data2price + data3price + data4price + data5price + price)/5
-        ema5tempdata.append(id)
-        ema5tempdata.append(ema5)
-        ema5list.append(ema5tempdata)
-
-        print("COMPLETED TASK!")
-        print(id, ema5)
-
-    for emadata in ema5list:
-        emaid = emadata[0]
-        emanumber = emadata[1]
-        print(emaid)
-        db.execute(f"UPDATE doge5min SET ema5price = {emanumber} WHERE id = {emaid}")
-
-
-def set_ema10(database, tablename):
-
-    emalist10 = []
-
-    db = create_engine("sqlite:///"+database)
-
-    data = db.execute(f"SELECT * FROM {tablename}")
-
-    ema10list = []
-    for info in data:
-
-        price = info['lastprice']
-        id = info['id']
-        
-
-        emanumbers = db.execute(f"SELECT lastprice FROM doge5min WHERE id < {id} ORDER BY id DESC LIMIT 10;")
-        
-        
-        ema10sum = 0
-        for info in emanumbers:
-            
-            number = info[0]
-            ema10sum += number
-
-        #print(f"EMASUM: {ema10sum}")
-        ema10 = (ema10sum / 10)
-        ##print(f"EMA10: {ema10}")
-        emadata = []
-        emadata.append(id)
-        emadata.append(ema10)
-        ema10list.append(emadata)
-        
-    for thing in ema10list:
-        emaid = thing[0]
-        ema10final = thing[1]
-        db.execute(f"UPDATE doge5min SET ema10price = {ema10final} WHERE id = {emaid}")
-
-
-def set_ema30(database, tablename):
-
-    emalist30 = []
-
-    db = create_engine("sqlite:///"+database)
-
-    data = db.execute(f"SELECT * FROM {tablename}")
-
-    ema30list = []
-    for info in data:
-
-        price = info['lastprice']
-        id = info['id']
-        
-
-        emanumbers = db.execute(f"SELECT lastprice FROM doge5min WHERE id < {id} ORDER BY id DESC LIMIT 30;")
-        
-        
-        ema30sum = 0
-        for info in emanumbers:
-            
-            number = info[0]
-            ema30sum += number
-
-        #print(f"EMASUM: {ema10sum}")
-        ema10 = (ema30sum / 30)
-        ##print(f"EMA10: {ema10}")
-        emadata = []
-        emadata.append(id)
-        emadata.append(ema10)
-        ema30list.append(emadata)
-        
-    for thing in ema30list:
-        emaid = thing[0]
-        ema10final = thing[1]
-        db.execute(f"UPDATE doge5min SET ema30price = {ema10final} WHERE id = {emaid}")
-
+    return (df)
 
 
 def set_ma10(database, tablename):
@@ -402,7 +303,7 @@ def set_ma30(database, tablename):
 
 
 
-def execute_doge_musktrade():
+def execute_doge_musktrade(input_tp, input_sl):
   
     
     ###Due to technical difficulties in instanteous limit orders (delay has been up to 6seconds)
@@ -413,14 +314,14 @@ def execute_doge_musktrade():
     doge_price = float(doge_price)
     symbol = "DOGE-USDT"
     size = 1
-    client.create_market_order(symbol=symbol, side="buy", size=size)
+    #client.create_market_order(symbol=symbol, side="buy", size=size)
     print(f"1 dogecoin was successfully purchased at {doge_price}")
     ##SET to Text you the purchase order and then after sale the sale order
 
     ##Then we want to monitor the price of said token, and we want to determine what percentage of profits/losses we want to accept
-    desired_take_profit = 1.005
+    desired_take_profit = input_tp
     take_profit_target = doge_price * desired_take_profit
-    desired_stop_loss = 0.9975
+    desired_stop_loss = input_sl
     stop_loss_target = doge_price * desired_stop_loss
     print(take_profit_target, stop_loss_target)
 
@@ -431,24 +332,23 @@ def execute_doge_musktrade():
         doge_monitor_price = float(doge_monitor_price)
         if doge_monitor_price <= stop_loss_target:
             doge_coin_not_sold = False
-            client.create_market_order(symbol=symbol, side="sell", size=size)
+            #client.create_market_order(symbol=symbol, side="sell", size=size)
             account_balance = doge_musk_check_balance()
-            print(f"Dogecoin was sold for a 0.05% profit @{doge_monitor_price}")
+            print(f"Dogecoin was sold for a loss @{doge_monitor_price}")
             print(f"Account Balance:{account_balance}\n")
-            return ("Success")
+            return ("Failure")
+            doge_coin_not_sold = False
         ####If the take profit target is hit; trigger dogecoinsold, client.kucoin SELL, and print to the console
         if doge_monitor_price >= take_profit_target:
             doge_coin_not_sold = False
-            client.create_market_order(symbol=symbol, side="sell", size=size)
+            #client.create_market_order(symbol=symbol, side="sell", size=size)
             account_balance = doge_musk_check_balance()
-            print(f"Dogecoin was sold for a 0.03% loss @{doge_monitor_price}")
+            print(f"Dogecoin was sold for a profit @{doge_monitor_price}")
             print(f"Account Balance: {account_balance}\n")
-            return("Failure")
+            return("Success")
+            doge_coin_not_sold = False
     time.sleep(0.5)
     
-    
-
-
 
 def get_account_balances():
     
